@@ -9,7 +9,8 @@ RM		= rm -f
 ### SRCS ###
 INC		= inc/
 
-SRC		= main.cpp
+	SRC		= main.cpp \
+			  src/Server.cpp
 
 ### OBJS ###
 OBJS	= $(SRC:.cpp=.o)
