@@ -4,12 +4,9 @@ void Server::_initSocket()
 {
 	_serverFd = socket(AF_INET, SOCK_STREAM, 0);
 	if (_serverFd == -1)
-	{
-		close(_serverFd);
-		_serverFd = -1;
 		throw std::runtime_error("socket() failed");
-	}
 
+	std::cout << "Fd : "<< _serverFd << std::endl;
 	int reuse = 1;
 	if (setsockopt(_serverFd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1)
 	{
@@ -62,4 +59,30 @@ Server::~Server()
 {
 	if (_serverFd != -1)
 		close(_serverFd);
+}
+
+void Server::run(){
+
+	std::cout << "Server running. Waiting for connections..." << std::endl;
+	while (g_running)
+	{
+		if (poll(_pollfds.data(), _pollfds.size(), -1) < 0){
+			if (!g_running)
+				break ;
+			throw std::runtime_error("poll() failed");
+		}
+		/*for (size_t i = 0; i < _pollfds.size(); i++){
+			int fd = _pollfds[i].fd;
+			short revents = _pollfds[i].revents;
+			if (fd == _serverFd){
+				if (revents & POLLIN)
+					_acceptClient();
+				continue ;
+			}
+			if (revents & POLLIN) { _handleClient(fd); }
+			if (_clients.find(fd) == _clients.end()) { continue ; }
+			if (revents & POLLOUT) { _flushClientOutput(fd); }
+		}*/
+	}
+	std::cout << "Server shutting down." << std::endl;
 }

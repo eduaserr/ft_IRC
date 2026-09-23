@@ -60,6 +60,7 @@ int main(int ac, char **av){
 	try
 	{
 		Server server(port, av[2]);
+		server.run();
 	}
 	catch (const std::runtime_error &error)
 	{

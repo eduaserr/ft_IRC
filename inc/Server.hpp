@@ -17,6 +17,9 @@
 
 extern volatile sig_atomic_t	g_running;
 
+class Client;
+class Channel;
+
 class	Server
 {
 	private:
@@ -29,13 +32,21 @@ class	Server
 		int				_serverFd;
 		std::vector<struct pollfd> _pollfds;
 
+		std::map<int, Client *> _clients;				//Server crea Client  -> Server destruye Client
+		std::map<std::string, Channel *> _channels;		//Server crea Channel -> Server destruye Channel
+
 		void _initSocket();
+
+		void _acceptClient();
+		void _handleClient(int fd);
+		void _flushClientOutput(int fd);
+		void _removeClient(int fd);
 
 	public:
 		Server(int port, const std::string &password);
 		~Server();
 
-		//void	run();
+		void	run();
 
 		// * Getters * //
 		const std::string&	getPassword() const {return _password;}
