@@ -16,7 +16,7 @@
 # include <netinet/in.h>
 
 #include "Message.hpp"
-#include "Parser.hpp"
+#include "CommandRegistry.hpp"
 
 
 extern volatile sig_atomic_t	g_running;
@@ -38,6 +38,7 @@ class	Server
 
 		std::map<int, Client *> _clients;					//Server crea Client  -> Server destruye Client
 		std::map<std::string, Channel *> _channels;			//Server crea Channel -> Server destruye Channel
+		CommandRegistry				_registry;
 
 		void _initSocket();
 

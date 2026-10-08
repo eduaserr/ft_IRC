@@ -1,7 +1,7 @@
 NAME		:= ircserv
 
 CXX			:= c++
-CXXFLAGS	:= -Wall -Wextra -Werror -std=c++98 -Iinclude
+CXXFLAGS	:= -Wall -Wextra -Werror -std=c++98 -Iinclude -g -O0
 
 SRCS		:= main.cpp \
 			   src/Server.cpp \
@@ -11,6 +11,7 @@ SRCS		:= main.cpp \
 			   src/Parser.cpp \
 			   src/CommandRegistry.cpp \
 			   src/ICommand.cpp \
+			   src/commands/PingCommand.cpp \
 			   src/Replies.cpp \
 			   src/Config.cpp
 

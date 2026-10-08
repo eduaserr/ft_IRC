@@ -68,4 +68,3 @@ const std::string &Config::getPasswd() const
 {
 	return _passwd;
 }
-
