@@ -1,82 +1,34 @@
-1 Paso
-Handle Signals
-Parseo de argumentos
+# ircserv
 
-2 Paso
-Iniciar server
-Server. cpp,hpp
+IRC server, C++98, single `poll()` loop, no threads/fork.
 
-Socket(familia de protocolo,
-	two-way connection based bytestream,
-	default protocolo). Retorna un fd con el numero del proceso a procesar.
+## Build
 
-setsockopt(). activar `SO_REUSEADDR` para poder volver a iniciar el servidor después de cerrarlo sin esperar
+```
+make        # build
+make re     # rebuild clean
+make clean  # remove .o files
+make fclean # remove .o files and the binary
+```
 
+## Layout
 
-estructura `sockaddr_in`
-	sockaddr_in address;
-	std::memset(&address, 0, sizeof(address));
-	address.sin_family = AF_INET;
-	address.sin_addr.s_addr = htonl(INADDR_ANY);
-	address.sin_port = htons(_port);
+```
+include/    headers - the shared contract, frozen after M0
+src/        implementations
+main.cpp    stays tiny: Config -> Server -> run()
+```
 
+See `MILESTONES.md` for the ticket breakdown and `.github/ISSUE_TEMPLATE`
+for how a ticket should be scoped.
 
-bind(fd del socket,
-	ptr a estructura adecuada para el protocolo elegido,
-	sizeof(addr_struct)). Enlaza el socket al puerto.
+## Ownership at a glance
 
+- **Track A** - `Server`, `Client`, the poll loop, socket plumbing
+- **Track B** - `Parser`, `Message`, `CommandRegistry`, `Replies`, registration commands
+- **Track C** - `Channel`, channel/messaging commands, operator commands
 
-
-
-3 Paso
-server.run()
-	- acceptClient(). aceptar cleintes
-	- handleClient(). procesar lineas completas
-	- if (_clients.find(fd) == _clients.end()) { continue ; }
-	- flushClientOutput()
-
-3.1
-AcceptClient()
-	accept().
-
-
-
-
-
-
-
-
-
-3.2
-handleCleint()
-
-3.3
-flushClientOutput
-
-
-
-
-
-
-
-
-.hpp (objetos) a crear
-
-Server.hpp
-_name: nombre del canal, por ejemplo #general.
-_topic: tema actual del canal.
-_members: descriptores de los clientes miembros.
-_operators: descriptores de los operadores.
-_invited: descriptores de clientes invitados.
-_inviteOnly: modo +i.
-_topicOperatorsOnly: modo +t.
-_hasKey: indica si el canal tiene clave.
-_key: clave del canal, modo +k.
-_hasUserLimit: indica si existe límite de usuarios.
-_userLimit: máximo de miembros, modo +l.
-
-
-Client.hpp
-Channel.hpp
-
-Comandos.hpp -> 1 .hpp para cada comando?
+Each `ICommand` implementation is one class in one file under
+`src/commands/` (create that folder on your first command ticket) -
+that's what keeps three people's work mergeable without stepping on
+each other's lines.
