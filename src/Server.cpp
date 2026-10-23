@@ -2,6 +2,18 @@
 #include "../include/Client.hpp"
 #include "../include/Replies.hpp"
 #include "../include/commands/PingCommand.hpp"
+#include "../include/commands/CapCommand.hpp"
+#include "../include/commands/PassCommand.hpp"
+#include "../include/commands/NickCommand.hpp"
+#include "../include/commands/UserCommand.hpp"
+#include "../include/commands/JoinCommand.hpp"
+#include "../include/commands/InviteCommand.hpp"
+#include "../include/commands/KickCommand.hpp"
+#include "../include/commands/ModeCommand.hpp"
+#include "../include/commands/TopicCommand.hpp"
+#include "../include/commands/QuitCommand.hpp"
+#include "../include/commands/PrivmsgCommand.hpp"
+#include "../include/commands/PartCommand.hpp"
 
 void Server::_initSocket()
 {
@@ -53,10 +65,27 @@ void Server::_initSocket()
 	std::cout << "Server initialized on port " << _port << std::endl;
 }
 
+void Server::_registerCommands()
+{
+	_registry.registerCommand("PING", new PingCommand());
+	_registry.registerCommand("CAP", new CapCommand());
+	_registry.registerCommand("PASS", new PassCommand());
+	_registry.registerCommand("NICK", new NickCommand());
+	_registry.registerCommand("USER", new UserCommand());
+	_registry.registerCommand("JOIN", new JoinCommand());
+	_registry.registerCommand("PART", new PartCommand());
+	_registry.registerCommand("PRIVMSG", new PrivmsgCommand());
+	_registry.registerCommand("QUIT", new QuitCommand());
+	_registry.registerCommand("TOPIC", new TopicCommand());
+	_registry.registerCommand("INVITE", new InviteCommand());
+	_registry.registerCommand("KICK", new KickCommand());
+	_registry.registerCommand("MODE", new ModeCommand());
+}
+
 Server::Server(int port, const std::string& password) : _port(port), _password(password), _serverFd(-1), _registry()
 {
 	_initSocket();
-	_registry.registerCommand("PING", new PingCommand());
+	_registerCommands();
 }
 
 Server::~Server()
@@ -69,6 +98,25 @@ Server::~Server()
 	}
 	if (_serverFd != -1)
 		close(_serverFd);
+}
+
+bool Server::nicknameInUse(const std::string &nickname, const Client *except) const
+{
+	for (std::map<int, Client *>::const_iterator it = _clients.begin(); it != _clients.end(); ++it)
+	{
+		if (it->second != except && it->second->getNickname() == nickname)
+			return true;
+	}
+	return false;
+}
+
+void Server::tryRegister(Client &client)
+{
+	if (!client.isRegistered() && client.hasAcceptedPassword() && !client.getNickname().empty() && !client.getUsername().empty())
+	{
+		client.setRegistered(true);
+		client.appendOutput(Replies::welcome("ircserv", client.getNickname()));
+	}
 }
 
 void Server::_acceptClient()
@@ -109,8 +157,7 @@ void Server::_handleClient(int fd)
 	std::map<int, Client *>::iterator clientIt = _clients.find(fd);
 	if (clientIt == _clients.end())
 	{
-		std::cout << "[DEBUG] client fd=" << fd
-			<< " not found after recv" << std::endl;
+		std::cout << "[DEBUG] client fd=" << fd << " not found after recv" << std::endl;
 		return;
 	}
 	Client *client = clientIt->second;
@@ -128,21 +175,19 @@ void Server::_handleClient(int fd)
 		{
 			std::cout << "[DEBUG] incomplete input for fd=" << fd
 				<< ", waiting for more bytes" << std::endl;
-			break;
+			break ;
 		}
 		if (result == Parser::PARSE_INVALID)
 		{
 			std::cout << "[DEBUG] invalid IRC line for fd=" << fd
 				<< ", message discarded" << std::endl;
-			continue;
+			continue ;
 		}
 
 		std::cout << "[DEBUG] command=[" << message.getCommand() << "]" << std::endl;
 		if (!_registry.dispatch(*this, *client, message))
 		{
-			client->appendOutput(Replies::numeric("ircserv", "421",
-				client->getNickname(), "Unknown command: "
-				+ message.getCommand()));
+			client->appendOutput(Replies::numeric("ircserv", "421", client->getNickname(), "Unknown command: " + message.getCommand()));
 			std::cout << "[DEBUG] unknown command for fd=" << fd << std::endl;
 		}
 		else
@@ -152,7 +197,7 @@ void Server::_handleClient(int fd)
 			if (_pollfds[i].fd == fd)
 			{
 				_pollfds[i].events |= POLLOUT;
-				break;
+				break ;
 			}
 		}
 	}
@@ -163,7 +208,7 @@ void Server::_flushClientOutput(int fd)
 	Client *client = _clients[fd];
 	std::string &output = client->getOutputBuffer();
 	if (output.empty())
-		return;
+		return ;
 	ssize_t bytesSent = send(fd, output.data(), output.size(), 0);
 	if (bytesSent < 0)
 		throw std::runtime_error("send() failed");

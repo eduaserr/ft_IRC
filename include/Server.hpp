@@ -41,6 +41,7 @@ class	Server
 		CommandRegistry				_registry;
 
 		void _initSocket();
+		void _registerCommands();
 
 		void _acceptClient();
 		void _handleClient(int fd);
@@ -52,6 +53,9 @@ class	Server
 		~Server();
 
 		void	run();
+		bool nicknameInUse(const std::string &nickname,
+			const Client *except) const;
+		void tryRegister(Client &client);
 
 		// * Getters * //
 		const std::string&	getPassword() const {return _password;}

@@ -12,8 +12,7 @@ PingCommand::~PingCommand()
 {
 }
 
-void PingCommand::execute(Server &server, Client &client,
-	const Message &message)
+void PingCommand::execute(Server &server, Client &client, const Message &message)
 {
 	(void)server;
 	client.appendOutput(Replies::pong("ircserv", message.getTrailing()));

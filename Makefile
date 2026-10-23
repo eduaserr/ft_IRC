@@ -12,6 +12,18 @@ SRCS		:= main.cpp \
 			   src/CommandRegistry.cpp \
 			   src/ICommand.cpp \
 			   src/commands/PingCommand.cpp \
+			   src/commands/CapCommand.cpp \
+			   src/commands/PassCommand.cpp \
+			   src/commands/NickCommand.cpp \
+			   src/commands/UserCommand.cpp \
+			   src/commands/InviteCommand.cpp \
+			   src/commands/JoinCommand.cpp \
+			   src/commands/KickCommand.cpp \
+			   src/commands/PartCommand.cpp \
+			   src/commands/PrivmsgCommand.cpp \
+			   src/commands/QuitCommand.cpp \
+			   src/commands/TopicCommand.cpp \
+			   src/commands/ModeCommand.cpp \
 			   src/Replies.cpp \
 			   src/Config.cpp
 

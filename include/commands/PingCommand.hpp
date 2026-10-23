@@ -13,8 +13,7 @@ class PingCommand : public ICommand
 		PingCommand();
 		~PingCommand();
 
-		void execute(Server &server, Client &client,
-			const Message &message);
+		void execute(Server &server, Client &client, const Message &message);
 };
 
 #endif

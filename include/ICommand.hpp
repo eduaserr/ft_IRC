@@ -17,8 +17,7 @@ class ICommand
 	public:
 		virtual ~ICommand();
 
-		virtual void execute(Server &server, Client &client,
-			const Message &message) = 0;
+		virtual void execute(Server &server, Client &client, const Message &message) = 0;
 };
 
 #endif

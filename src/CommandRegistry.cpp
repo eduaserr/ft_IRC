@@ -8,8 +8,7 @@ CommandRegistry::CommandRegistry() : _commands()
 
 CommandRegistry::~CommandRegistry()
 {
-	for (std::map<std::string, ICommand *>::iterator it = _commands.begin();
-		it != _commands.end(); ++it)
+	for (std::map<std::string, ICommand *>::iterator it = _commands.begin(); it != _commands.end(); ++it)
 		delete it->second;
 }
 
@@ -41,8 +40,7 @@ ICommand *CommandRegistry::findCommand(const std::string &command) const
 	return it->second;
 }
 
-bool CommandRegistry::dispatch(Server &server, Client &client,
-	const Message &message) const
+bool CommandRegistry::dispatch(Server &server, Client &client, const Message &message) const
 {
 	ICommand *handler = findCommand(message.getCommand());
 
