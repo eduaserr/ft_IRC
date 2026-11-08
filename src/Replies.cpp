@@ -111,6 +111,29 @@ std::string Replies::numeric(const std::string &serverName, const std::string &c
 	return ":" + serverName + " " + code + " " + target + " :" + text + "\r\n";
 }
 
+std::string Replies::topicReply(const std::string &serverName,
+	const std::string &target, const std::string &channel,
+	const std::string &topic)
+{
+	return ":" + serverName + " 332 " + target + " " + channel
+		+ " :" + topic + "\r\n";
+}
+
+std::string Replies::namesReply(const std::string &serverName,
+	const std::string &target, const std::string &channel,
+	const std::string &names)
+{
+	return ":" + serverName + " 353 " + target + " = " + channel
+		+ " :" + names + "\r\n";
+}
+
+std::string Replies::endOfNames(const std::string &serverName,
+	const std::string &target, const std::string &channel)
+{
+	return ":" + serverName + " 366 " + target + " " + channel
+		+ " :End of /NAMES list\r\n";
+}
+
 /*
 1. CAP
 2. PASS

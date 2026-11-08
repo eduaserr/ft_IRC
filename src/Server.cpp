@@ -1,4 +1,5 @@
 #include "../include/Server.hpp"
+#include "../include/Channel.hpp"
 #include "../include/Client.hpp"
 #include "../include/Replies.hpp"
 #include "../include/commands/PingCommand.hpp"
@@ -14,6 +15,7 @@
 #include "../include/commands/QuitCommand.hpp"
 #include "../include/commands/PrivmsgCommand.hpp"
 #include "../include/commands/PartCommand.hpp"
+#include <cerrno>
 
 void Server::_initSocket()
 {
@@ -90,6 +92,10 @@ Server::Server(int port, const std::string& password) : _port(port), _password(p
 
 Server::~Server()
 {
+	for (std::map<std::string, Channel *>::iterator it = _channels.begin();
+		it != _channels.end(); ++it)
+		delete it->second;
+	_channels.clear();
 	for (std::map<int, Client *>::iterator it = _clients.begin();
 		it != _clients.end(); ++it)
 	{
@@ -121,15 +127,19 @@ void Server::tryRegister(Client &client)
 
 void Server::_acceptClient()
 {
-	int clientFd = accept(_serverFd, NULL, NULL);
+	sockaddr_in clientAddress;
+	socklen_t clientAddressLength = sizeof(clientAddress);
+	int clientFd = accept(_serverFd,
+		reinterpret_cast<sockaddr *>(&clientAddress), &clientAddressLength);
 	if (clientFd == -1)
-		throw std::runtime_error("accept() failed");
+		return ;
 	if (fcntl(clientFd, F_SETFL, O_NONBLOCK) == -1)
 	{
 		close(clientFd);
 		throw std::runtime_error("fcntl() client failed");
 	}
 	_clients[clientFd] = new Client(clientFd);
+	_clients[clientFd]->setHost(inet_ntoa(clientAddress.sin_addr));
 	struct pollfd pfd;
 	pfd.fd = clientFd;
 	pfd.events = POLLIN;
@@ -151,7 +161,12 @@ void Server::_handleClient(int fd)
 		return;
 	}
 	if (bytesRead < 0)
-		throw std::runtime_error("recv() failed");
+	{
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			return ;
+		_removeClient(fd);
+		return ;
+	}
 
 	std::string data(buffer, static_cast<std::size_t>(bytesRead));
 	std::map<int, Client *>::iterator clientIt = _clients.find(fd);
@@ -208,10 +223,18 @@ void Server::_flushClientOutput(int fd)
 	Client *client = _clients[fd];
 	std::string &output = client->getOutputBuffer();
 	if (output.empty())
+	{
+		_setPollEvents(fd, POLLIN);
 		return ;
+	}
 	ssize_t bytesSent = send(fd, output.data(), output.size(), 0);
 	if (bytesSent < 0)
-		throw std::runtime_error("send() failed");
+	{
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			return ;
+		_removeClient(fd);
+		return ;
+	}
 	output.erase(0, static_cast<std::size_t>(bytesSent));
 	std::cout << "[DEBUG] send fd=" << fd << " bytes=" << bytesSent << std::endl;
 	if (output.empty())
@@ -229,6 +252,20 @@ void Server::_removeClient(int fd)
 	std::map<int, Client *>::iterator it = _clients.find(fd);
 	if (it != _clients.end())
 	{
+		Client *client = it->second;
+		for (std::map<std::string, Channel *>::iterator channelIt = _channels.begin();
+			channelIt != _channels.end();)
+		{
+			Channel *channel = channelIt->second;
+			channel->removeMember(client);
+			if (channel->isEmpty())
+			{
+				delete channel;
+				_channels.erase(channelIt++);
+			}
+			else
+				++channelIt;
+		}
 		delete it->second;
 		_clients.erase(it);
 	}
@@ -273,4 +310,20 @@ void Server::run(){
 		}
 	}
 	std::cout << "Server shutting down." << std::endl;
+}
+
+
+void	Server::_setPollEvents(int fd, short events)
+{
+	for (size_t i = 0; i < _pollfds.size(); i++)
+		if (_pollfds[i].fd == fd) { _pollfds[i].events = events; break ; }
+}
+
+void	Server::sendToClient(int fd, const std::string &msg)
+{
+	std::map<int, Client *>::iterator	clientIt = _clients.find(fd);
+	if (clientIt == _clients.end()) { return ; }
+
+	clientIt->second->appendOutput(msg);
+	_setPollEvents(fd, POLLIN | POLLOUT);
 }

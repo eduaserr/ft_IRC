@@ -37,6 +37,14 @@ public:
 			const std::string &target, const std::string &modes,
 			const std::string &parameters);
 		static std::string numeric(const std::string &serverName, const std::string &code, const std::string &target, const std::string &text);
+		static std::string topicReply(const std::string &serverName,
+			const std::string &target, const std::string &channel,
+			const std::string &topic);
+		static std::string namesReply(const std::string &serverName,
+			const std::string &target, const std::string &channel,
+			const std::string &names);
+		static std::string endOfNames(const std::string &serverName,
+			const std::string &target, const std::string &channel);
 };
 
 #endif

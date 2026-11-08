@@ -46,6 +46,9 @@ class	Server
 		void _acceptClient();
 		void _handleClient(int fd);
 		void _flushClientOutput(int fd);
+
+		void _setPollEvents(int fd, short events);
+
 		void _removeClient(int fd);
 
 	public:
@@ -53,9 +56,9 @@ class	Server
 		~Server();
 
 		void	run();
-		bool nicknameInUse(const std::string &nickname,
-			const Client *except) const;
+		bool nicknameInUse(const std::string &nickname, const Client *except) const;
 		void tryRegister(Client &client);
+		void sendToClient(int fd, const std::string &msg);
 
 		// * Getters * //
 		const std::string&	getPassword() const {return _password;}

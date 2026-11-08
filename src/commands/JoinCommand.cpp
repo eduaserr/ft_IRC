@@ -1,4 +1,10 @@
 #include "../../include/commands/JoinCommand.hpp"
+#include "../../include/Client.hpp"
+#include "../../include/Message.hpp"
+#include "../../include/Replies.hpp"
+#include <cctype>
+#include <iostream>
+#include <vector>
 
 JoinCommand::JoinCommand()
 {

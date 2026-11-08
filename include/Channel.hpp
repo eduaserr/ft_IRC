@@ -1,60 +1,77 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Channel.hpp                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: eduaserr < eduaserr@student.42malaga.co    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/05/12 12:39:24 by erico-ke          #+#    #+#             */
+/*   Updated: 2026/11/07 21:45:34 by eduaserr         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef CHANNEL_HPP
 # define CHANNEL_HPP
 
-#include <string>
-#include <set>
-#include <cstddef>
+# include <string>
+# include <vector>
+# include <algorithm>
 
-class Client;
+class	Client;
+class	Server;
 
-class Channel
+class	Channel
 {
-private:
-	Channel();
-	Channel(const Channel &other);
-	Channel &operator=(const Channel &other);
+	private:
+		std::string				_name;
+		std::string				_topic;
+		std::string				_key;
+		std::vector<Client *>	_members;
+		std::vector<Client *>	_operators;
+		std::vector<Client *>	_invited;
+		bool					_inviteOnly;
+		bool					_topicRestricted;
+		int						_userLimit;
 
-	std::string _name;
-	std::string _topic;
+	public:
+		Channel();
+		Channel(const std::string &name);
+		~Channel(void);
 
-	/*#include <set>
+		// * Member methods * //
+		void	addMember(Client *client);
+		void	removeMember(Client *client);
+		bool	isMember(Client *client)		const;
+		bool	isEmpty()						const;
+		// * Operator methods * //
 
-	Almacenamos el int Fd.
+		void	addOperator(Client *client);
+		void	removeOperator(Client *client);
+		bool	isOperator(Client *client) const;
+		//* Invite methods * //
 
-	std::set<int> _members;
-	std::set<int> _operators;
-	std::set<int> _invited;*/
+		void	addInvite(Client *client);
+		bool	isInvited(Client *client) const;
 
-	//desventaja: si server elimina un cliente, hay que quitar el puntero de todos los canales
-	std::set<Client *> _members;
-	std::set<Client *> _operators;
-	std::set<Client *> _invited;
+		// * Broadcast (used to send message to each channel and user) * //
+		void	broadcast(const std::string &msg, Server &server, Client *except = NULL);
 
-	bool _inviteOnly;
-	bool _topicOperatorsOnly;
+		// * Getters * //
+		std::string	getName()			const;
+		std::string	getTopic()			const;
+		std::string	getKey()			const;
+		bool		isInviteOnly()		const;
+		bool		isTopicRestricted()	const;
+		int			getUserLimit()		const;
+		size_t		getMemberCount()	const;
 
-	bool _hasKey;
-	std::string _key;
-
-	bool _hasUserLimit;
-	std::size_t _userLimit;
-
-public:
-	Channel(const std::string &name);
-	~Channel();
-
-	const std::string& getName() const;
-	const std::string& getTopic() const;
-	bool hasMember(Client *client) const;
-	bool isOperator(Client *client) const;
-	bool isInvited(Client *client) const;
-
-	void addMember(Client *client);
-	void removeMember(Client *client);
-	void addOperator(Client *client);
-	void removeOperator(Client *client);
-	void invite(Client *client);
-	void removeInvite(Client *client);
+		// * Setters * //
+		void	setTopic(const std::string &topic);
+		void	setKey(const std::string &key);
+		void	setInviteOnly(bool val);
+		void	setTopicRestricted(bool val);
+		void	setUserLimit(int limit);
+		const	std::vector<Client*> &getMembers() const;
 };
 
 #endif
