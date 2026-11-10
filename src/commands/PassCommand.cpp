@@ -4,6 +4,7 @@
 #include "../../include/Message.hpp"
 #include "../../include/Replies.hpp"
 #include "../../include/Server.hpp"
+#include <iostream>
 
 PassCommand::PassCommand()
 {
@@ -29,10 +30,14 @@ void PassCommand::execute(Server &server, Client &client, const Message &message
 	}
 	if (params[0] != server.getPassword())
 	{
+		std::cout << "[AUTH] password rejected fd=" << client.getFd()
+			<< std::endl;
 		client.appendOutput(Replies::numeric("ircserv", "464", client.getNickname(), "Password incorrect"));
 		return ;
 	}
 
 	client.setPasswordAccepted(true);
+	std::cout << "[AUTH] password accepted fd=" << client.getFd()
+		<< std::endl;
 	server.tryRegister(client);
 }

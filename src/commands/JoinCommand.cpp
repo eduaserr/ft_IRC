@@ -4,6 +4,7 @@
 #include "../../include/Message.hpp"
 #include "../../include/Replies.hpp"
 #include "../../include/Server.hpp"
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -18,6 +19,19 @@ JoinCommand::~JoinCommand()
 void JoinCommand::execute(Server &server, Client &client, const Message &message)
 {
 	const std::vector<std::string> &params = message.getParams();
+
+	std::cout << "[JOIN] fd=" << client.getFd()
+		<< " registered=" << client.isRegistered()
+		<< " passwordAccepted=" << client.hasAcceptedPassword()
+		<< " params=" << params.size() << std::endl;
+	if (!client.isRegistered())
+	{
+		std::cout << "[JOIN] rejected fd=" << client.getFd()
+			<< " reason=not-registered" << std::endl;
+		client.appendOutput(Replies::numeric("ircserv", "451",
+			client.getNickname(), "You have not registered"));
+		return ;
+	}
 
 	if (params.empty())
 	{
