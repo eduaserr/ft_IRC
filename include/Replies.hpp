@@ -12,10 +12,10 @@ class Replies
 
 public:
 		// CAPABILITIES: Capability negotiation (CAP LS, LIST, ACK, NAK)
-		static std::string	capLs(const std::string &target, const std::string &capabilities);
-		static std::string	capList(const std::string &target, const std::string &capabilities);
-		static std::string	capAck(const std::string &target, const std::string &capabilities);
-		static std::string	capNak(const std::string &target, const std::string &capabilities);
+		static std::string	capLs(const std::string &serverName, const std::string &target, const std::string &capabilities);
+		static std::string	capList(const std::string &serverName, const std::string &target, const std::string &capabilities);
+		static std::string	capAck(const std::string &serverName, const std::string &target, const std::string &capabilities);
+		static std::string	capNak(const std::string &serverName, const std::string &target, const std::string &capabilities);
 		// CONNECTION: Connection and client registration
 		static std::string	pong(const std::string &serverName, const std::string &token);
 		static std::string	welcome(const std::string &serverName, const std::string &nickname);

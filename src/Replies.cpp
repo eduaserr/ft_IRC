@@ -4,24 +4,32 @@ Replies::Replies()
 {
 }
 
-std::string Replies::capLs(const std::string &target, const std::string &capabilities)
+std::string Replies::capLs(const std::string &serverName,
+	const std::string &target, const std::string &capabilities)
 {
-	return "CAP " + target + " LS :" + capabilities + "\r\n";
+	return ":" + serverName + " CAP " + target + " LS :"
+		+ capabilities + "\r\n";
 }
 
-std::string Replies::capList(const std::string &target, const std::string &capabilities)
+std::string Replies::capList(const std::string &serverName,
+	const std::string &target, const std::string &capabilities)
 {
-	return "CAP " + target + " LIST :" + capabilities + "\r\n";
+	return ":" + serverName + " CAP " + target + " LIST :"
+		+ capabilities + "\r\n";
 }
 
-std::string Replies::capAck(const std::string &target, const std::string &capabilities)
+std::string Replies::capAck(const std::string &serverName,
+	const std::string &target, const std::string &capabilities)
 {
-	return "CAP " + target + " ACK :" + capabilities + "\r\n";
+	return ":" + serverName + " CAP " + target + " ACK :"
+		+ capabilities + "\r\n";
 }
 
-std::string Replies::capNak(const std::string &target, const std::string &capabilities)
+std::string Replies::capNak(const std::string &serverName,
+	const std::string &target, const std::string &capabilities)
 {
-	return "CAP " + target + " NAK :" + capabilities + "\r\n";
+	return ":" + serverName + " CAP " + target + " NAK :"
+		+ capabilities + "\r\n";
 }
 
 std::string Replies::pong(const std::string &serverName, const std::string &token)
