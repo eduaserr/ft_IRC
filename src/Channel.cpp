@@ -1,6 +1,5 @@
 #include "../include/Channel.hpp"
 #include "../include/Client.hpp"
-#include "../include/Server.hpp"
 #include <iostream>
 
 Channel::Channel() : _name(), _topic(), _key(), _members(), _operators(),
@@ -41,13 +40,13 @@ void	Channel::addInvite(Client *client)
 	if (!isInvited(client)) { _invited.push_back(client); }
 	else { std::cout << client->getUsername() << " is already invited to channel " << _name << std::endl; }
 }
+void	Channel::removeInvite(Client *client)
+{
+	_invited.erase(std::remove(_invited.begin(), _invited.end(), client),
+		_invited.end());
+}
 bool	Channel::isInvited(Client *client) const { return std::find(_invited.begin(), _invited.end(), client) != _invited.end(); }
 
-void	Channel::broadcast(const std::string &msg, Server &server, Client *except)
-{
-	for (size_t i = 0; i < _members.size(); i++)
-		if (_members[i] != except) { server.sendToClient(_members[i]->getFd(), msg); }
-}
 // * Getters * //
 std::string	Channel::getName() const { return (_name); }
 std::string	Channel::getTopic() const { return (_topic); }

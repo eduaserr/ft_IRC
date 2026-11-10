@@ -57,7 +57,10 @@ Parser::Parse_e Parser::_readCommand(const std::string &line, std::size_t &pos, 
 		return PARSE_INVALID; // despues del prefijo debe existir un comando.
 	space = line.find(' ', pos);
 	if (space == std::string::npos)
+	{
 		cmd = line.substr(pos);
+		pos = line.size();
+	}
 	else
 	{
 		cmd = line.substr(pos, space - pos);

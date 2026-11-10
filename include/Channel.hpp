@@ -6,7 +6,7 @@
 /*   By: eduaserr < eduaserr@student.42malaga.co    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 12:39:24 by erico-ke          #+#    #+#             */
-/*   Updated: 2026/11/07 21:45:34 by eduaserr         ###   ########.fr       */
+/*   Updated: 2026/11/08 05:35:41 by eduaserr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,6 @@
 # include <algorithm>
 
 class	Client;
-class	Server;
 
 class	Channel
 {
@@ -51,10 +50,8 @@ class	Channel
 		//* Invite methods * //
 
 		void	addInvite(Client *client);
+		void	removeInvite(Client *client);
 		bool	isInvited(Client *client) const;
-
-		// * Broadcast (used to send message to each channel and user) * //
-		void	broadcast(const std::string &msg, Server &server, Client *except = NULL);
 
 		// * Getters * //
 		std::string	getName()			const;

@@ -14,6 +14,8 @@
 #include "../include/commands/TopicCommand.hpp"
 #include "../include/commands/QuitCommand.hpp"
 #include "../include/commands/PrivmsgCommand.hpp"
+#include "../include/commands/WhoCommand.hpp"
+#include "../include/commands/WhoisCommand.hpp"
 #include "../include/commands/PartCommand.hpp"
 #include <cerrno>
 
@@ -82,6 +84,8 @@ void Server::_registerCommands()
 	_registry.registerCommand("INVITE", new InviteCommand());
 	_registry.registerCommand("KICK", new KickCommand());
 	_registry.registerCommand("MODE", new ModeCommand());
+	_registry.registerCommand("WHO", new WhoCommand());
+	_registry.registerCommand("WHOIS", new WhoisCommand());
 }
 
 Server::Server(int port, const std::string& password) : _port(port), _password(password), _serverFd(-1), _registry()
@@ -122,7 +126,75 @@ void Server::tryRegister(Client &client)
 	{
 		client.setRegistered(true);
 		client.appendOutput(Replies::welcome("ircserv", client.getNickname()));
+		std::cout << "[AUTH] registered fd=" << client.getFd()
+			<< " nick=" << client.getNickname() << std::endl;
 	}
+}
+
+Channel *Server::getChannel(const std::string &name)
+{
+	std::map<std::string, Channel *>::iterator it = _channels.find(name);
+
+	if (it == _channels.end())
+		return NULL;
+	return it->second;
+}
+
+Channel *Server::createChannel(const std::string &name)
+{
+	Channel *channel = getChannel(name);
+
+	if (channel != NULL)
+		return channel;
+	channel = new Channel(name);
+	_channels[name] = channel;
+	return channel;
+}
+
+void Server::removeChannel(const std::string &name)
+{
+	std::map<std::string, Channel *>::iterator it = _channels.find(name);
+
+	if (it == _channels.end())
+		return ;
+	delete it->second;
+	_channels.erase(it);
+}
+
+Client *Server::getClient(const std::string &nickname)
+{
+	for (std::map<int, Client *>::iterator it = _clients.begin();
+		it != _clients.end(); ++it)
+	{
+		if (it->second->getNickname() == nickname)
+			return it->second;
+	}
+	return NULL;
+}
+
+void Server::disconnectClient(Client &client, const std::string &reason)
+{
+	std::vector<Client *> recipients;
+	std::string message = Replies::quit(client.getPrefix(), reason);
+
+	for (std::map<std::string, Channel *>::iterator channelIt = _channels.begin();
+		channelIt != _channels.end(); ++channelIt)
+	{
+		if (!channelIt->second->isMember(&client))
+			continue ;
+		const std::vector<Client *> &members = channelIt->second->getMembers();
+		for (std::size_t i = 0; i < members.size(); ++i)
+		{
+			if (members[i] == &client)
+				continue ;
+			if (std::find(recipients.begin(), recipients.end(), members[i])
+				== recipients.end())
+				recipients.push_back(members[i]);
+		}
+	}
+	for (std::size_t i = 0; i < recipients.size(); ++i)
+		sendToClient(recipients[i]->getFd(), message);
+	_removeClient(client.getFd());
 }
 
 void Server::_acceptClient()
@@ -145,7 +217,8 @@ void Server::_acceptClient()
 	pfd.events = POLLIN;
 	pfd.revents = 0;
 	_pollfds.push_back(pfd);
-	std::cout << "[DEBUG] accepted client fd=" << clientFd << std::endl;
+	std::cout << "[CONN] accepted fd=" << clientFd
+		<< " host=" << _clients[clientFd]->getHost() << std::endl;
 }
 
 void Server::_handleClient(int fd)
@@ -156,7 +229,7 @@ void Server::_handleClient(int fd)
 	bytesRead = recv(fd, buffer, sizeof(buffer), 0);
 	if (bytesRead == 0)
 	{
-		std::cout << "[DEBUG] client fd=" << fd << " disconnected" << std::endl;
+		std::cout << "[CONN] closed fd=" << fd << std::endl;
 		_removeClient(fd);
 		return;
 	}
@@ -164,6 +237,7 @@ void Server::_handleClient(int fd)
 	{
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			return ;
+		std::cout << "[WARN] recv failed fd=" << fd << std::endl;
 		_removeClient(fd);
 		return ;
 	}
@@ -172,12 +246,9 @@ void Server::_handleClient(int fd)
 	std::map<int, Client *>::iterator clientIt = _clients.find(fd);
 	if (clientIt == _clients.end())
 	{
-		std::cout << "[DEBUG] client fd=" << fd << " not found after recv" << std::endl;
 		return;
 	}
 	Client *client = clientIt->second;
-
-	std::cout << "[DEBUG] recv fd=" << fd << " bytes=" << bytesRead << " data=[" << data << "]" << std::endl;
 
 	while (true)
 	{
@@ -185,28 +256,25 @@ void Server::_handleClient(int fd)
 		Parser::Parse_e result = client->getParser().processInput(data, message);
 		data.clear();
 
-		std::cout << "[DEBUG] parser result=" << result << std::endl;
 		if (result == Parser::PARSE_INCOMPLETE)
-		{
-			std::cout << "[DEBUG] incomplete input for fd=" << fd
-				<< ", waiting for more bytes" << std::endl;
 			break ;
-		}
 		if (result == Parser::PARSE_INVALID)
 		{
-			std::cout << "[DEBUG] invalid IRC line for fd=" << fd
-				<< ", message discarded" << std::endl;
+			std::cout << "[WARN] invalid IRC line fd=" << fd << std::endl;
 			continue ;
 		}
 
-		std::cout << "[DEBUG] command=[" << message.getCommand() << "]" << std::endl;
+		std::cout << "[RX] fd=" << fd << " command="
+			<< message.getCommand() << " params="
+			<< message.getParams().size() << std::endl;
 		if (!_registry.dispatch(*this, *client, message))
 		{
 			client->appendOutput(Replies::numeric("ircserv", "421", client->getNickname(), "Unknown command: " + message.getCommand()));
-			std::cout << "[DEBUG] unknown command for fd=" << fd << std::endl;
+			std::cout << "[WARN] unknown command fd=" << fd << " command="
+				<< message.getCommand() << std::endl;
 		}
-		else
-			std::cout << "[DEBUG] command dispatched for fd=" << fd << std::endl;
+		if (_clients.find(fd) == _clients.end())
+			break ;
 		for (std::size_t i = 0; i < _pollfds.size(); ++i)
 		{
 			if (_pollfds[i].fd == fd)
@@ -236,7 +304,7 @@ void Server::_flushClientOutput(int fd)
 		return ;
 	}
 	output.erase(0, static_cast<std::size_t>(bytesSent));
-	std::cout << "[DEBUG] send fd=" << fd << " bytes=" << bytesSent << std::endl;
+	std::cout << "[TX] fd=" << fd << " bytes=" << bytesSent << std::endl;
 	if (output.empty())
 	{
 		for (std::size_t i = 0; i < _pollfds.size(); ++i)
@@ -326,4 +394,15 @@ void	Server::sendToClient(int fd, const std::string &msg)
 
 	clientIt->second->appendOutput(msg);
 	_setPollEvents(fd, POLLIN | POLLOUT);
+}
+
+void	Server::broadcast(Channel &channel, const std::string &msg, Client *except)
+{
+	const std::vector<Client *> &members = channel.getMembers();
+
+	for (std::size_t i = 0; i < members.size(); ++i)
+	{
+		if (members[i] != except)
+			sendToClient(members[i]->getFd(), msg);
+	}
 }

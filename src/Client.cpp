@@ -35,6 +35,11 @@ const std::string& Client::getRealname() const
 	return _realname;
 }
 
+std::string Client::getPrefix() const
+{
+	return _nickname + "!" + _username + "@" + _host;
+}
+
 bool Client::hasAcceptedPassword() const
 {
 	return _passwordAccepted;

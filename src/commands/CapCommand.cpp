@@ -4,7 +4,6 @@
 #include "../../include/Message.hpp"
 #include "../../include/Replies.hpp"
 #include <cctype>
-#include <iostream>
 #include <vector>
 
 CapCommand::CapCommand()
@@ -50,6 +49,5 @@ void CapCommand::execute(Server &server, Client &client, const Message &message)
 	if (subcmd == "END")
 		return ;
 
-	std::cout << "[DEBUG] unknown CAP subcommand=[" << subcmd << "]" << std::endl;
 	client.appendOutput(Replies::capNak("*", subcmd));
 }

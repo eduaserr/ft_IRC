@@ -20,6 +20,8 @@ SRCS		:= main.cpp \
 			   src/commands/JoinCommand.cpp \
 			   src/commands/KickCommand.cpp \
 			   src/commands/PartCommand.cpp \
+			   src/commands/WhoCommand.cpp \
+			   src/commands/WhoisCommand.cpp \
 			   src/commands/PrivmsgCommand.cpp \
 			   src/commands/QuitCommand.cpp \
 			   src/commands/TopicCommand.cpp \

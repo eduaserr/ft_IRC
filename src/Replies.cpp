@@ -119,6 +119,13 @@ std::string Replies::topicReply(const std::string &serverName,
 		+ " :" + topic + "\r\n";
 }
 
+std::string Replies::noTopic(const std::string &serverName,
+	const std::string &target, const std::string &channel)
+{
+	return ":" + serverName + " 331 " + target + " " + channel
+		+ " :No topic is set\r\n";
+}
+
 std::string Replies::namesReply(const std::string &serverName,
 	const std::string &target, const std::string &channel,
 	const std::string &names)
@@ -132,6 +139,52 @@ std::string Replies::endOfNames(const std::string &serverName,
 {
 	return ":" + serverName + " 366 " + target + " " + channel
 		+ " :End of /NAMES list\r\n";
+}
+
+std::string Replies::whoReply(const std::string &serverName,
+	const std::string &target, const std::string &channel,
+	const std::string &username, const std::string &host,
+	const std::string &server, const std::string &nickname,
+	bool operatorStatus, const std::string &realname)
+{
+	std::string status = "H";
+
+	if (operatorStatus)
+		status += "*";
+	return ":" + serverName + " 352 " + target + " " + channel + " "
+		+ username + " " + host + " " + server + " " + nickname + " "
+		+ status + " :0 " + realname + "\r\n";
+}
+
+std::string Replies::whoEnd(const std::string &serverName,
+	const std::string &target, const std::string &mask)
+{
+	return ":" + serverName + " 315 " + target + " " + mask
+		+ " :End of /WHO list\r\n";
+}
+
+std::string Replies::whoisUser(const std::string &serverName,
+	const std::string &target, const std::string &nickname,
+	const std::string &username, const std::string &host,
+	const std::string &realname)
+{
+	return ":" + serverName + " 311 " + target + " " + nickname + " "
+		+ username + " " + host + " * :" + realname + "\r\n";
+}
+
+std::string Replies::whoisServer(const std::string &serverName,
+	const std::string &target, const std::string &nickname,
+	const std::string &reportedServer, const std::string &info)
+{
+	return ":" + serverName + " 312 " + target + " " + nickname + " "
+		+ reportedServer + " :" + info + "\r\n";
+}
+
+std::string Replies::whoisEnd(const std::string &serverName,
+	const std::string &target, const std::string &nickname)
+{
+	return ":" + serverName + " 318 " + target + " " + nickname
+		+ " :End of /WHOIS list\r\n";
 }
 
 /*
@@ -148,4 +201,6 @@ std::string Replies::endOfNames(const std::string &serverName,
 11. INVITE
 12. KICK
 13. MODE
+
+WHO / WHOIS
 */

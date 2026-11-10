@@ -34,6 +34,7 @@ public:
 	const std::string& getNickname() const;
 	const std::string& getUsername() const;
 	const std::string& getRealname() const;
+	std::string getPrefix() const;
 
 	bool hasAcceptedPassword() const;
 	bool isRegistered() const;

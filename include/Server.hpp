@@ -59,6 +59,13 @@ class	Server
 		bool nicknameInUse(const std::string &nickname, const Client *except) const;
 		void tryRegister(Client &client);
 		void sendToClient(int fd, const std::string &msg);
+		void broadcast(Channel &channel, const std::string &msg,
+			Client *except = NULL);
+		Channel *getChannel(const std::string &name);
+		Channel *createChannel(const std::string &name);
+		void removeChannel(const std::string &name);
+		Client *getClient(const std::string &nickname);
+		void disconnectClient(Client &client, const std::string &reason);
 
 		// * Getters * //
 		const std::string&	getPassword() const {return _password;}
